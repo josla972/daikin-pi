@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # TODO: use os.tempfile or something
 DAIKIN_LIRC_CONFIG_TMP = '/tmp/daikin-pi.lircd.conf'
 LIRC_CONFIG_COPY_CMD = [
-    'sudo', 'cp', DAIKIN_LIRC_CONFIG_TMP, '/etc/lirc/lircd.conf.d/'
+    'sudo', 'cp', DAIKIN_LIRC_CONFIG_TMP, '/dev/shm/'
 ]
 LIRC_RESTART = ['sudo', 'systemctl', 'restart', 'lircd']
 LIRC_SEND_COMMAND = ['irsend', 'SEND_ONCE', 'daikin-pi', 'dynamic-signal']
@@ -446,8 +446,7 @@ class DaikinController:
                  lirc=None):
         self.autotransmit = autotransmit
         self.autosave = autosave
-        self.storage_file = os.path.join(os.path.dirname(__file__),
-                                         '../data/config.json')
+        self.storage_file = os.path.join('/dev/shm/daikin_pi_config.json')
         self.lirc = lirc or DaikinLIRC()
 
     def save(self, state):
