@@ -52,8 +52,8 @@ class DaikinState:
             temperature=19,
             ac_mode=AC_MODE.AUTO,
             fan_mode=FAN_MODE.AUTO,
-            swing_vertical=0,
-            swing_horizontal=0,
+            swing_vertical=False,
+            swing_horizontal=False,
             economy=False,
             comfort=False,
             powerful=False,
@@ -119,7 +119,6 @@ class DaikinState:
 
     @swing_vertical.setter
     def swing_vertical(self, value):
-        print value
         if bool(value) == True:
             self.__swing_vertical = 0xff
         else:
@@ -305,10 +304,10 @@ class DaikinMessage:
         self._set_first_nybble(frame, FAN_SETTING, self.state.fan_mode.value)
 
         # Fan Swing
-        self._set_first_nybble(frame, SWING_HORIZONTAL,
-                                0xf0*(self.state.swing_horizontal))
         self._set_second_nybble(frame, SWING_VERTICAL,
                                 0x0f*(self.state.swing_vertical))
+        self._set_first_nybble(frame, SWING_HORIZONTAL,
+                                0x0f*(self.state.swing_horizontal))
 
         # Timer Delay - complicated encoding not really completely understood
         # Timer ON sets duration at TIMER_A and TIMER_B
