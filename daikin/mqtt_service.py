@@ -146,6 +146,7 @@ def set_fan(value):
     logger.info('setting fan to {}'.format(value))
     fan = {
         'auto': FAN_MODE.AUTO,
+        'silent': FAN_MODE.SILENT,
         'low': FAN_MODE.ONE,
         'medium': FAN_MODE.THREE,
         'high': FAN_MODE.FIVE,
