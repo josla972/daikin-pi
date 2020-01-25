@@ -176,7 +176,7 @@ climate:
     swing_modes:
       - "both"
       - "vertical"
-      - "horizonal"
+      - "horizontal"
       - "off"
     fan_modes:
       - "high"
