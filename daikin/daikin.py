@@ -299,6 +299,8 @@ class DaikinMessage:
         # Power On/Off
         if self.state.power:
             frame[MODE_POWER_TIMERS] = frame[MODE_POWER_TIMERS] | 0x01
+        else:
+            frame[MODE_POWER_TIMERS] = frame[MODE_POWER_TIMERS] & 0xFE
 
         # Fan Mode/Speed
         self._set_first_nybble(frame, FAN_SETTING, self.state.fan_mode.value)
