@@ -137,6 +137,7 @@ def set_mode(value):
         'cool': AC_MODE.COOL,
         'heat': AC_MODE.HEAT,
         'fan_only': AC_MODE.FAN,
+        'off': AC_MODE.OFF,
     }.get(value, AC_MODE.AUTO)
 
     send_daikin_state(ac_mode=ac_mode)

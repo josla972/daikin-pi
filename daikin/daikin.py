@@ -16,11 +16,12 @@ LIRC_SEND_COMMAND = ['irsend', 'SEND_ONCE', 'daikin-pi', 'dynamic-signal']
 
 
 class AC_MODE(Enum):
-    AUTO = 0x0
-    DRY = 0x2
-    COOL = 0x3
-    HEAT = 0x4
-    FAN = 0x6
+    OFF = 0x00
+    AUTO = 0x01
+    DRY = 0x21
+    COOL = 0x31
+    HEAT = 0x41
+    FAN = 0x61
 
 
 class FAN_MODE(Enum):
@@ -98,7 +99,7 @@ class DaikinState:
     @ac_mode.setter
     def ac_mode(self, value):
         if value not in AC_MODE:
-            value = AC_MODE.AUTO
+            value = AC_MODE.OFF
 
         self.__ac_mode = value
 
@@ -287,7 +288,7 @@ class DaikinMessage:
 
         # Set AC_MODE
         self._set_first_nybble(frame, MODE_POWER_TIMERS,
-                               self.state.ac_mode.value)
+                               self.state.ac_mode.value >> 4)
 
         # Timer Is Setting Unit On/Off
         if self.state.timer is not None:
@@ -300,6 +301,8 @@ class DaikinMessage:
         if self.state.power:
             frame[MODE_POWER_TIMERS] = frame[MODE_POWER_TIMERS] | 0x01
         else:
+            frame[MODE_POWER_TIMERS] = frame[MODE_POWER_TIMERS] & 0xFE
+        if self.state.ac_mode.value == 0:
             frame[MODE_POWER_TIMERS] = frame[MODE_POWER_TIMERS] & 0xFE
 
         # Fan Mode/Speed
