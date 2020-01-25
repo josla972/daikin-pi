@@ -52,8 +52,8 @@ class DaikinState:
             temperature=19,
             ac_mode=AC_MODE.AUTO,
             fan_mode=FAN_MODE.AUTO,
-            swing_vertical=False,
-            swing_horizontal=False,
+            swing_vertical=0,
+            swing_horizontal=0,
             economy=False,
             comfort=False,
             powerful=False,
@@ -119,7 +119,11 @@ class DaikinState:
 
     @swing_vertical.setter
     def swing_vertical(self, value):
-        self.__swing_vertical = bool(value)
+        print value
+        if bool(value) == True:
+            self.__swing_vertical = 0xff
+        else:
+            self.__swing_vertical = 0
 
     @property
     def swing_horizontal(self):
@@ -127,7 +131,10 @@ class DaikinState:
 
     @swing_horizontal.setter
     def swing_horizontal(self, value):
-        self.__swing_horizontal = bool(value)
+        if bool(value) == True:
+            self.__swing_horizontal = 0xff
+        else:
+            self.__swing_horizontal = 0
 
     @property
     def economy(self):
@@ -184,6 +191,7 @@ class DaikinMessage:
     @property
     def frame_one(self):
         # relevant bit indicies
+        HEADER_ID = 3
         MESSAGE_ID = 4
         COMFORT = 6
         CHECKSUM = 7
@@ -191,7 +199,7 @@ class DaikinMessage:
         frame = self._create_frame()
 
         # Message ID
-        frame[MESSAGE_ID] = 0xc5
+        frame[HEADER_ID] = 0xf0
 
         # Comfort mode
         if self.state.comfort:
@@ -205,13 +213,16 @@ class DaikinMessage:
     @property
     def frame_two(self):
 
+        # NOT USED FOR ARC432A14
         # relevant bit indicies
+        HEADER_ID = 3
         MESSAGE_ID = 4
         CHECKSUM = 7
 
         frame = self._create_frame()
 
         # Message ID
+        frame[HEADER_ID] = 0x00
         frame[MESSAGE_ID] = 0x42
 
         # Checksum
@@ -239,12 +250,14 @@ class DaikinMessage:
         """
 
         # relevant bit indicies
+        HEADER_ID = 3
         MESSAGE_ID = 4
         MODE_POWER_TIMERS = 5
         TEMPERATURE = 6
-        SWING_HORIZONTAL = 8
+        # HOW DOES BYTE 7 work?
         FAN_SETTING = 8
-        SWING_VERTICAL = 9
+        SWING_VERTICAL = 8 # Set to 0xFF or 0 for off
+        SWING_HORIZONTAL = 9
         TIMER_A = 10
         TIMER_B = 11
         TIMER_C = 12
@@ -253,10 +266,13 @@ class DaikinMessage:
         CHECKSUM = 18
 
         frame = self._create_frame(19)
+        frame[HEADER_ID] = 0x00
 
         # Set initial fixed frame bits
-        frame[SWING_HORIZONTAL] = 0xb0
-        frame[MODE_POWER_TIMERS] = 0x08
+#        frame[SWING_HORIZONTAL] = 0xb0
+        frame[FAN_SETTING] = 0xb0
+        #frame[MODE_POWER_TIMERS] = 0x08 
+        frame[MODE_POWER_TIMERS] = 0x0 
         frame[15] = 0xc1  # dunno just always set to this..
         frame[ECONOMY] = 0x80
 
@@ -289,10 +305,10 @@ class DaikinMessage:
         self._set_first_nybble(frame, FAN_SETTING, self.state.fan_mode.value)
 
         # Fan Swing
-        self._set_second_nybble(frame, SWING_HORIZONTAL,
-                                self.state.swing_horizontal)
+        self._set_first_nybble(frame, SWING_HORIZONTAL,
+                                0xf0*(self.state.swing_horizontal))
         self._set_second_nybble(frame, SWING_VERTICAL,
-                                self.state.swing_vertical)
+                                0x0f*(self.state.swing_vertical))
 
         # Timer Delay - complicated encoding not really completely understood
         # Timer ON sets duration at TIMER_A and TIMER_B
@@ -340,7 +356,7 @@ class DaikinMessage:
         frame[0] = 0x11
         frame[1] = 0xda
         frame[2] = 0x27
-        frame[3] = 0x00
+#        frame[3] = 0x00
         return frame
 
     def _checksum(self, frame):
@@ -381,9 +397,17 @@ class DaikinLIRC:
             self.ONE if digit == '1' else self.ZERO for digit in binary_frame
         ])
 
+#        {{zero}}
+#        {{zero}}
+#        {{zero}}
+#        {{zero}}
+#        {{zero}}
+#        {{long_gap}}
+
     def get_config(self, message):
         frame_one = self._get_frame_codes(message.frame_one)
-        frame_two = self._get_frame_codes(message.frame_two)
+        #frame_two = self._get_frame_codes(message.frame_two)
+#        {{frame_two}}
         frame_three = self._get_frame_codes(message.frame_three)
         template = Template("""begin remote
     name    daikin-pi
@@ -393,17 +417,9 @@ class DaikinLIRC:
     gap     34978
     begin raw_codes
         name dynamic-signal
-        {{zero}}
-        {{zero}}
-        {{zero}}
-        {{zero}}
-        {{zero}}
         {{short_gap}}
         {{frame_header}}
         {{frame_one}}
-        {{long_gap}}
-        {{frame_header}}
-        {{frame_two}}
         {{long_gap}}
         {{frame_header}}
         {{frame_three}}
@@ -418,7 +434,7 @@ end remote
             short_gap=self.SHORT_GAP,
             long_gap=self.LONG_GAP,
             frame_one=frame_one,
-            frame_two=frame_two,
+#            frame_two=frame_two,
             frame_three=frame_three,
         )
 
